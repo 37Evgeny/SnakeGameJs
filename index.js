@@ -16,9 +16,13 @@ for (let i = initialLength - 1; i >= 0; i--) {
 
 let dx = 1; // Начальное движение вправо
 let dy = 0;
+
 let food = {x: 0, y: 0};
-let gameInterval;
 let score = 0;
+
+// Скорость и интервал
+let currentSpeed = 150; // начальная скорость (мс)
+let gameIntervalId;
 
 // Обновление отображения счета
 function updateScore() {
@@ -37,17 +41,13 @@ function placeFood() {
 // Обработка нажатий клавиш для управления змейкой
 document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowUp' && dy !== 1) {
-        dx = 0;
-        dy = -1;
+        dx=0; dy=-1;
     } else if (e.key === 'ArrowDown' && dy !== -1) {
-        dx = 0;
-        dy = 1;
-    } else if (e.key === 'ArrowLeft' && dx !== 1) {
-        dx = -1;
-        dy = 0;
-    } else if (e.key === 'ArrowRight' && dx !== -1) {
-        dx = 1;
-        dy = 0;
+        dx=0; dy=1;
+    } else if (e.key === 'ArrowLeft' && dx !==1) {
+        dx=-1; dy=0;
+    } else if (e.key === 'ArrowRight' && dx !==-1) {
+        dx=1; dy=0;
     }
 });
 
@@ -75,15 +75,16 @@ function drawSegment(segment, isHead, isTail, prevSegment, nextSegment) {
 function gameLoop() {
     const head = {x: snake[0].x + dx, y: snake[0].y + dy};
 
+    // Проверка границ и столкновений
     if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
         alert('Игра окончена! Ваш счет: ' + score);
-        clearInterval(gameInterval);
+        clearInterval(gameIntervalId);
         return;
     }
 
     if (snake.some(segment => segment.x === head.x && segment.y === head.y)) {
         alert('Игра окончена! Ваш счет: ' + score);
-        clearInterval(gameInterval);
+        clearInterval(gameIntervalId);
         return;
     }
 
@@ -93,6 +94,7 @@ function gameLoop() {
         score++;
         updateScore();
         placeFood();
+        increaseSpeed(); // увеличиваем скорость после съедания еды
     } else {
         snake.pop();
     }
@@ -100,6 +102,7 @@ function gameLoop() {
     draw();
 }
 
+// Функция для рисования всей змейки и еды
 function draw() {
     ctx.fillStyle='#222';
     ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -121,13 +124,21 @@ function draw() {
    }
 }
 
+// Функция для увеличения скорости после каждого съедания
+function increaseSpeed() {
+   if (currentSpeed >50) { // минимальная скорость
+       currentSpeed -=5;   // уменьшаем интервал на 10 мс
+       startGame();         // перезапускаем цикл с новой скоростью
+   }
+}
+
+// Функция для запуска или перезапуска интервала игры
+function startGame() {
+   if (gameIntervalId) clearInterval(gameIntervalId);
+   gameIntervalId=setInterval(gameLoop,currentSpeed);
+}
+
 // Инициализация игры
 placeFood();
 updateScore();
-
-const startGameInterval=setInterval(() => {
-   if(dx!==0 || dy!==0){
-       gameInterval=setInterval(gameLoop,150);
-       clearInterval(startGameInterval);
-   }
-},50);
+startGame();
